@@ -44,6 +44,7 @@
 # font-
 font-family = "Monaspace Xenon"
 
-background-opacity = 0.8
+background-opacity = 0.95
+background = 000000
 
 command = /bin/zsh

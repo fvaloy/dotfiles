@@ -95,6 +95,7 @@ vim.opt.tabstop = 4 -- Tamaño de un tab
 vim.opt.shiftwidth = 4 -- Indentación al presionar '>'
 vim.opt.expandtab = true -- Convierte tabs en espacios
 vim.opt.softtabstop = 4 -- Hace que el tab se sienta como 4 espacios
+vim.opt.colorcolumn = '80'
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -1030,7 +1031,8 @@ require('lazy').setup({
   },
 })
 
-vim.cmd [[colorscheme retrobox]]
+--vim.cmd [[colorscheme retrobox]]
+vim.cmd [[colorscheme default]]
 
 vim.cmd [[
   hi Normal guibg=NONE ctermbg=NONE
