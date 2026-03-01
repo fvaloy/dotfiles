@@ -238,6 +238,29 @@ vim.opt.rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
+  -- Luasnip
+  --
+  {
+    'L3MON4D3/LuaSnip',
+    dependencies = { 'rafamadriz/friendly-snippets' },
+  },
+  {
+    'saghen/blink.cmp',
+    dependencies = { 'rafamadriz/friendly-snippets' },
+
+    version = '1.*',
+
+    opts = {
+      keymap = { preset = 'default' },
+
+      appearance = {
+        nerd_font_variant = 'mono',
+      },
+
+      signature = { enabled = true },
+    },
+  },
+
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
@@ -263,6 +286,19 @@ require('lazy').setup({
   -- options to `gitsigns.nvim`.
   --
   -- See `:help gitsigns` to understand what the configuration keys do
+  {
+    'jesseleite/nvim-noirbuddy',
+    dependencies = {
+      { 'tjdevries/colorbuddy.nvim' },
+    },
+    lazy = false,
+    priority = 1000,
+    opts = {
+      -- All of your `setup(opts)` will go here
+    },
+  },
+  { 'rebelot/kanagawa.nvim' },
+  { 'gremble0/yellowbeans.nvim' },
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
     opts = {
@@ -275,6 +311,8 @@ require('lazy').setup({
       },
     },
   },
+  { 'Sonya-sama/kawaii.nvim' },
+  { 'rose-pine/neovim' },
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
@@ -488,6 +526,8 @@ require('lazy').setup({
 
       -- Allows extra capabilities provided by nvim-cmp
       'hrsh7th/cmp-nvim-lsp',
+
+      'saghen/blink.cmp',
     },
     config = function()
       -- Brief aside: **What is LSP?**
@@ -723,10 +763,11 @@ require('lazy').setup({
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
+            local snip_capabilities = require('blink.cmp').get_lsp_capabilities()
             -- This handles overriding only values explicitly passed
             -- by the server configuration above. Useful when disabling
             -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, snip_capabilities, server.capabilities or {})
             require('lspconfig')[server_name].setup(server)
           end,
         },
@@ -1009,6 +1050,70 @@ require('lazy').setup({
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
+  --
+  -- DAP CONFIGURAITON
+
+  {
+    'mfussenegger/nvim-dap',
+    dependencies = {
+      'rcarriga/nvim-dap-ui',
+      'theHamsta/nvim-dap-virtual-text',
+      'nvim-neotest/nvim-nio',
+    },
+    config = function()
+      local dap = require 'dap'
+      local dapui = require 'dapui'
+
+      dapui.setup()
+      require('nvim-dap-virtual-text').setup {}
+
+      local netcoredbg = vim.fn.exepath 'netcoredbg'
+      if netcoredbg ~= '' then
+        dap.adapters.coreclr = {
+          type = 'executable',
+          command = '/opt/netcoredbg/netcoredbg',
+          args = { '--interpreter=vscode' },
+        }
+
+        dap.configurations.cs = {
+          {
+            type = 'coreclr',
+            name = 'Attach to ASP.NET Core API',
+            request = 'attach',
+            processId = function()
+              -- Listar procesos dotnet con nombre de archivo
+              local handle = io.popen 'ps -eo pid,cmd | grep dotnet | grep -v grep'
+              local result = handle:read '*a'
+              handle:close()
+              print('Procesos dotnet corriendo:\n' .. result)
+              return tonumber(vim.fn.input 'PID to attach: ')
+            end,
+          },
+        }
+        vim.keymap.set('n', '<F5>', function()
+          dap.continue()
+        end)
+        vim.keymap.set('n', '<F10>', function()
+          dap.step_over()
+        end)
+        vim.keymap.set('n', '<F11>', function()
+          dap.step_into()
+        end)
+        vim.keymap.set('n', '<F12>', function()
+          dap.step_out()
+        end)
+        vim.keymap.set('n', '<Leader>b', function()
+          dap.toggle_breakpoint()
+        end)
+        vim.keymap.set('n', '<Leader>dr', function()
+          dap.repl.open()
+        end)
+        vim.keymap.set('n', '<Leader>du', function()
+          dapui.toggle()
+        end)
+      end
+    end,
+  },
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
@@ -1032,7 +1137,7 @@ require('lazy').setup({
 })
 
 --vim.cmd [[colorscheme retrobox]]
-vim.cmd [[colorscheme default]]
+vim.cmd [[colorscheme kanagawa-dragon]]
 
 vim.cmd [[
   hi Normal guibg=NONE ctermbg=NONE
@@ -1043,6 +1148,7 @@ vim.cmd [[
   hi CursorLine guibg=NONE ctermbg=NONE
   hi SignColumn guibg=NONE ctermbg=NONE
 ]]
-
+require('luasnip.loaders.from_vscode').lazy_load()
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+--
